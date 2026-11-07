@@ -1,0 +1,396 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+:root {
+  --bg: #f4f1ea;
+  --fg: #1d1d1f;
+  --muted: #6b6560;
+  --accent: #8b5a2b;
+  --accent-fg: #ffffff;
+  --panel: #ffffff;
+  --border: #d9d2c5;
+  --error: #b3261e;
+  font-family: system-ui, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px;
+  overflow-x: clip; /* chessground file labels stick out by a few pixels */
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 16px;
+}
+
+h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.board-area {
+  position: relative;
+  width: min(100%, 600px);
+}
+
+.board {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.panel {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.status p {
+  margin: 0 0 4px;
+}
+
+.headline {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.counters {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.dice ul {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.die {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+  padding: 8px;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.die.used {
+  opacity: 0.35;
+  border-style: dashed;
+}
+
+.die-label {
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.dice-empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button {
+  font: inherit;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  color: var(--error);
+  margin: 0;
+}
+
+.promotion {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgb(0 0 0 / 55%);
+  color: #ffffff;
+  z-index: 10;
+}
+
+.promotion-choices {
+  display: flex;
+  gap: 8px;
+}
+
+.promotion-choices button {
+  font-size: 2.5rem;
+  line-height: 1;
+  padding: 8px 12px;
+  background: var(--panel);
+  color: var(--fg);
+}
+
+.promotion button.secondary {
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+/* --- Header and account pages (task 7) --- */
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.participant {
+  font-weight: 600;
+}
+
+a {
+  color: var(--accent);
+}
+
+a.button {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  text-decoration: none;
+}
+
+a.button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+.banner {
+  margin: 0;
+  padding: 8px 16px;
+  background: #fff4d6;
+  border-bottom: 1px solid var(--border);
+}
+
+.page.narrow {
+  max-width: 420px;
+}
+
+/* --- Legal documents and footer (SEC-12) --- */
+
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 24px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.page.legal {
+  max-width: 720px;
+}
+
+.page.legal p {
+  white-space: pre-line; /* line breaks inside a paragraph come from the text file */
+}
+
+.legal-version {
+  color: var(--muted);
+}
+
+.consent {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.consent input {
+  margin-top: 4px;
+}
+
+.legal-notice {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.form button[type='submit'] {
+  align-self: flex-start;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field input {
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--fg);
+}
+
+.links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Lobby (task 8) */
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lobby-block {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.offers {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.offers th,
+.offers td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.offers th {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+@media (max-width: 600px) {
+  .offers th:nth-child(4),
+  .offers td:nth-child(4) {
+    display: none;
+  }
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Online game (task 9) */
+.clock {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.clock.running {
+  border-color: var(--accent);
+  background: #fbf6ee;
+}
+
+.clock-time {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.clock.low .clock-time {
+  color: var(--error);
+}
+
+.draw-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
