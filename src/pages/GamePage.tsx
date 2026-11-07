@@ -82,6 +82,7 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
   const [error, setError] = useState<string | null>(null);
   const [promotion, setPromotion] = useState<PendingPromotion | null>(null);
   const [confirmResign, setConfirmResign] = useState(false);
+  const [resync, setResync] = useState(0); // puts the server position back on the board
   const now = useNow(game.clocks.running !== null && game.result === null);
   const opponent: ColorName = game.color === 'white' ? 'black' : 'white';
 
@@ -90,7 +91,10 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
       setBusy(true);
       setError(null);
       send(command)
-        .catch((reason: unknown) => setError(gameErrorText(reason, t)))
+        .catch((reason: unknown) => {
+          setError(gameErrorText(reason, t));
+          setResync((n) => n + 1); // a rejected move goes back
+        })
         .finally(() => setBusy(false));
     },
     [send, t],
@@ -134,6 +138,7 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
             interactive={interactive}
             onMove={onMove}
             orientation={game.color}
+            resync={resync}
           />
           {promotion && (
             <PromotionDialog
@@ -143,7 +148,10 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
                 setPromotion(null);
                 sendMove(promotion.from, promotion.to, piece);
               }}
-              onCancel={() => setPromotion(null)}
+              onCancel={() => {
+                setPromotion(null);
+                setResync((n) => n + 1); // put the pawn back
+              }}
             />
           )}
         </div>

@@ -33,6 +33,7 @@ export function HotSeatPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(true); // until the first state arrives
   const [promotion, setPromotion] = useState<PendingPromotion | null>(null);
+  const [resync, setResync] = useState(0); // puts the server position back on the board
   const started = useRef(false);
 
   const run = useCallback(
@@ -44,6 +45,7 @@ export function HotSeatPage() {
         setGame(state);
         rememberGame(state.game_id);
       } catch (caught) {
+        setResync((n) => n + 1); // a rejected move goes back
         if (caught instanceof ApiError && caught.code === 'version_conflict' && gameId) {
           setError(t('error.stale'));
           setGame(await api.get(gameId).catch(() => null));
@@ -117,6 +119,7 @@ export function HotSeatPage() {
               lastMove={lastMove}
               interactive={game.phase === 'move' && !busy && !promotion}
               onMove={onMove}
+              resync={resync}
             />
           )}
           {game && promotion && (
@@ -129,7 +132,7 @@ export function HotSeatPage() {
               }}
               onCancel={() => {
                 setPromotion(null);
-                setGame({ ...game }); // put the pawn back from the server position
+                setResync((n) => n + 1); // put the pawn back from the server position
               }}
             />
           )}
