@@ -68,19 +68,27 @@ export interface Lobby {
 
 /**
  * Keeps one connection while `participantId` is set; reconnects after drops.
- * `onSessionEnded` runs when the server closes with 4401 (logged out or blocked).
+ * `onSessionEnded` runs when the server closes with 4401 (logged out or blocked), or when a
+ * connection failed to open and `sessionAlive` says the session is gone: the server refuses /ws
+ * without a session at the handshake, which the browser reports as a plain drop.
  */
-export function useLobby(participantId: string | null, onSessionEnded: () => void): Lobby {
+export function useLobby(
+  participantId: string | null,
+  onSessionEnded: () => void,
+  sessionAlive: () => Promise<boolean>,
+): Lobby {
   const [state, dispatch] = useReducer(reducer, initialLobby);
   const [connected, setConnected] = useState(false);
   const socket = useRef<WebSocket | null>(null);
   const pending = useRef(new Map<string, Pending>());
   const nextId = useRef(0);
   const sessionEnded = useRef(onSessionEnded);
+  const checkSession = useRef(sessionAlive);
 
   useEffect(() => {
     sessionEnded.current = onSessionEnded;
-  }, [onSessionEnded]);
+    checkSession.current = sessionAlive;
+  }, [onSessionEnded, sessionAlive]);
 
   useEffect(() => {
     if (!participantId) return;
@@ -95,10 +103,17 @@ export function useLobby(participantId: string | null, onSessionEnded: () => voi
       pending.current.clear();
     };
 
+    const reconnect = () => {
+      timer = window.setTimeout(open, delay);
+      delay = Math.min(delay * 2, RECONNECT_MAX_MS);
+    };
+
     const open = () => {
       const ws = new WebSocket(socketUrl());
       socket.current = ws;
+      let opened = false;
       ws.onopen = () => {
+        opened = true;
         delay = RECONNECT_MIN_MS;
         dispatch({ type: 'reset' });
         setConnected(true);
@@ -127,8 +142,16 @@ export function useLobby(participantId: string | null, onSessionEnded: () => voi
           sessionEnded.current();
           return;
         }
-        timer = window.setTimeout(open, delay);
-        delay = Math.min(delay * 2, RECONNECT_MAX_MS);
+        if (opened) {
+          reconnect();
+          return;
+        }
+        // Never opened: maybe refused for a lost session. Ask before trying again.
+        void checkSession.current().then((alive) => {
+          if (stopped) return;
+          if (alive) reconnect();
+          else sessionEnded.current();
+        });
       };
     };
 

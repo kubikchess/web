@@ -6,7 +6,7 @@ import type { TFunction } from 'i18next';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { Participant } from '../authApi';
+import { authApi, type Participant } from '../authApi';
 import { useAuth } from '../auth/context';
 import {
   type Command,
@@ -19,6 +19,7 @@ import {
   visibleOffers,
 } from '../lobby/protocol';
 import { lobbyErrorText } from '../lobby/errors';
+import { sessionStillValid } from '../lobby/session';
 import { useLobby } from '../lobby/useLobby';
 import { GamePage } from './GamePage';
 
@@ -111,7 +112,8 @@ export function LobbyPage({ participant }: { participant: Participant }) {
   const { t } = useTranslation();
   const { refresh } = useAuth();
   const onSessionEnded = useCallback(() => void refresh(), [refresh]);
-  const { state, connected, send, leaveGame } = useLobby(participant.id, onSessionEnded);
+  const sessionAlive = useCallback(() => sessionStillValid(authApi.me, participant.id), [participant.id]);
+  const { state, connected, send, leaveGame } = useLobby(participant.id, onSessionEnded, sessionAlive);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('blitz');
