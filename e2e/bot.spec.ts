@@ -92,6 +92,9 @@ test('L-049: the computer form offers the increments of quick play', async ({ br
       items.map((item) => [item.getAttribute('value') ?? '', item.textContent ?? '']),
     );
 
+  // The lobby renders after the guest session: wait for the forms before reading them.
+  await expect(page.locator('#quick-increment option')).toHaveCount(7);
+  await expect(page.locator('#bot-increment option')).toHaveCount(7);
   const quick = await options('#quick-increment');
   expect(quick.map(([value]) => value)).toEqual(['', '5', '10', '15', '20', '25', '30']); // PAR-06
   expect(await options('#bot-increment')).toEqual(quick);

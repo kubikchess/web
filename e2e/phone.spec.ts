@@ -4,6 +4,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { tapMove } from './board';
+import { verifiedPlayer } from './users';
 
 const ROUND_TIMEOUT_MS = 20_000;
 
@@ -64,6 +65,28 @@ test('L-051: the lobby fits a phone screen', { tag: '@phone' }, async ({ page })
     await expect(page.getByTestId(id)).toBeVisible();
     await inWidth(page, page.getByTestId(id));
   }
+  expect(await fitsWidth(page)).toBe(true);
+});
+
+// rules-help, scenario «Шапка на телефоне»: the longest header — a signed-in player (NFR-15).
+test('the header of a signed-in player with the rules link fits a phone', { tag: '@phone' }, async ({ page }) => {
+  await verifiedPlayer(page);
+  await page.goto('/');
+  const header = page.locator('.site-header');
+  for (const item of [
+    header.getByTestId('nav-rules'),
+    header.getByRole('link', { name: 'История' }),
+    header.getByTestId('participant-name'),
+    header.getByRole('button', { name: 'Выйти' }),
+  ]) {
+    await expect(item).toBeVisible();
+    await inWidth(page, item);
+  }
+  expect(await fitsWidth(page)).toBe(true);
+
+  // The rules page itself fits too.
+  await header.getByTestId('nav-rules').click();
+  await expect(page.getByTestId('rules-page')).toBeVisible();
   expect(await fitsWidth(page)).toBe(true);
 });
 

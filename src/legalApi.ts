@@ -29,6 +29,8 @@ export const LEGAL_PAGES: Record<LegalDocumentId, string> = {
 
 /** The About page: frontend license and its source (NFR-17). */
 export const ABOUT_PAGE = '/about';
+/** The rules page (rules-help, NFR-18). */
+export const RULES_PAGE = '/rules';
 /** Public repository with the frontend source of every release (GPL-3.0-or-later, NFR-17). */
 export const SOURCE_REPOSITORY_URL = 'https://github.com/kubikchess/web';
 

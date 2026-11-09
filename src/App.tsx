@@ -5,7 +5,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { authApi } from './authApi';
 import { AuthProvider } from './auth/AuthProvider';
 import { Layout } from './Layout';
-import { ABOUT_PAGE, LEGAL_PAGES } from './legalApi';
+import { ABOUT_PAGE, LEGAL_PAGES, RULES_PAGE } from './legalApi';
 import { AboutPage } from './pages/AboutPage';
 import { EmailRequestPage } from './pages/EmailRequestPage';
 import { HistoryPage } from './pages/HistoryPage';
@@ -15,6 +15,7 @@ import { LegalPage } from './pages/LegalPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { RulesPage } from './pages/RulesPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 
 function ResendVerificationPage() {
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
       { path: LEGAL_PAGES.personal_data, element: <LegalPage document="personal_data" /> },
       { path: LEGAL_PAGES.privacy_policy, element: <LegalPage document="privacy_policy" /> },
       { path: ABOUT_PAGE, element: <AboutPage /> },
+      { path: RULES_PAGE, element: <RulesPage /> },
       { path: '/hot-seat', element: <HotSeatPage /> }, // development tool (OQ-041)
       { path: '*', element: <HomePage /> },
     ],

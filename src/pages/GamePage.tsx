@@ -22,6 +22,7 @@ import type { Command } from '../lobby/protocol';
 import { boardFen, lastMoveKeys, type Promotion, promotionChoices, toDests, toUci } from '../moves';
 import { opponentName } from '../names';
 import { PromotionDialog } from '../PromotionDialog';
+import { RulesSummary } from '../rules/RulesSummary';
 
 const TICK_MS = 200;
 const LOW_TIME_MS = 20_000;
@@ -249,6 +250,8 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
             </p>
           )}
         </aside>
+        {/* Left of the board on wide screens, below the panel on narrow ones (styles.css). */}
+        <RulesSummary />
       </div>
     </section>
   );

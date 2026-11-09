@@ -1,0 +1,9 @@
+{
+  "diceCount": 3,
+  "noCaptureDrawMoves": 30,
+  "skippedRoundsDraw": 3,
+  "blitzSeconds": 180,
+  "rapidSeconds": 300,
+  "incrementMinSeconds": 5,
+  "incrementMaxSeconds": 30
+}

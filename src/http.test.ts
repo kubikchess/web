@@ -131,6 +131,80 @@ describe('request', () => {
     expect(fetchMock.mock.calls.filter(([path]) => path === '/auth/me')).toHaveLength(1);
   });
 
+  // Two /auth/me without the cookie hand out two tokens; a late reply may replace the cookie
+  // while a POST is on its way with the earlier one (seen in the L-025 trace, 2026-11-09).
+  it('repeats a POST once when the CSRF cookie changed while it was sent', async () => {
+    const doc = { cookie: 'dicechess_csrf=first' };
+    vi.stubGlobal('document', doc);
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation((_input, init) => {
+      const header = new Headers(init?.headers).get(CSRF_HEADER);
+      if (header === 'first') {
+        doc.cookie = 'dicechess_csrf=second'; // the late /auth/me reply lands meanwhile
+        return Promise.resolve(reply(403, { detail: { code: 'csrf_failed' } }));
+      }
+      return Promise.resolve(new Response(null, { status: 202 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(request('POST', '/auth/register', {})).resolves.toBeNull();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [, retry] = fetchMock.mock.calls[1] ?? [];
+    expect(new Headers(retry?.headers).get(CSRF_HEADER)).toBe('second');
+  });
+
+  it('does not repeat a refused POST when the token stayed the same', async () => {
+    vi.stubGlobal('document', { cookie: TOKEN_COOKIE });
+    const fetchMock = stubFetch(reply(403, { detail: { code: 'csrf_failed' } }));
+
+    await expect(request('POST', '/auth/register', {})).rejects.toMatchObject({ status: 403, code: 'csrf_failed' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not repeat a POST refused for another reason', async () => {
+    const doc = { cookie: 'dicechess_csrf=first' };
+    vi.stubGlobal('document', doc);
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(() => {
+      doc.cookie = 'dicechess_csrf=second';
+      return Promise.resolve(reply(403, { detail: { code: 'account_blocked' } }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(request('POST', '/auth/login', {})).rejects.toMatchObject({ code: 'account_blocked' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares one /auth/me between the page and the token of a POST', async () => {
+    const doc = { cookie: '' };
+    vi.stubGlobal('document', doc);
+    let answerMe: () => void = () => undefined;
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation((input) => {
+      if (input === '/auth/me') {
+        return new Promise<Response>((resolve) => {
+          answerMe = () => {
+            doc.cookie = 'dicechess_csrf=only';
+            resolve(reply(200, { kind: 'guest' }));
+          };
+        });
+      }
+      return Promise.resolve(new Response(null, { status: 204 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    // The header asks who is there, the e-mail link page posts at the same time; and StrictMode
+    // mounts the provider twice in development.
+    const pages = [request('GET', '/auth/me'), request('GET', '/auth/me')];
+    const post = request('POST', '/auth/verify-email', { token: 't' });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    answerMe();
+
+    await expect(Promise.all(pages)).resolves.toEqual([{ kind: 'guest' }, { kind: 'guest' }]);
+    await post;
+    expect(fetchMock.mock.calls.map(([path]) => path)).toEqual(['/auth/me', '/auth/verify-email']);
+    const [, init] = fetchMock.mock.calls[1] ?? [];
+    expect(new Headers(init?.headers).get(CSRF_HEADER)).toBe('only');
+  });
+
   it('does not ask for a token before a GET', async () => {
     const fetchMock = freshBrowser(() => reply(200, null));
 

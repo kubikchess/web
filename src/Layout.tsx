@@ -4,7 +4,7 @@ import { Link, Outlet, useNavigate } from 'react-router';
 
 import { authApi } from './authApi';
 import { useAuth } from './auth/context';
-import { ABOUT_PAGE, LEGAL_PAGES } from './legalApi';
+import { ABOUT_PAGE, LEGAL_PAGES, RULES_PAGE } from './legalApi';
 
 export function Layout() {
   const { t } = useTranslation();
@@ -24,6 +24,9 @@ export function Layout() {
           {t('brand')}
         </Link>
         <nav className="account">
+          <Link to={RULES_PAGE} data-testid="nav-rules">
+            {t('nav.rules')}
+          </Link>
           {import.meta.env.DEV && <Link to="/hot-seat">{t('nav.hotSeat')}</Link>}
           {!loading && participant?.kind === 'user' && <Link to="/history">{t('nav.history')}</Link>}
           {!loading && participant && (
