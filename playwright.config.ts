@@ -82,9 +82,11 @@ export default defineConfig({
         // Letters go to MAIL_DIR even when the developer's .env sets up SMTP: tests read them
         // there, and test addresses must never reach a real mail server.
         DICECHESS_SMTP_HOST: '',
-        // Every test registers and logs in from 127.0.0.1.
+        // Every test registers, logs in and plays as a guest from 127.0.0.1.
         DICECHESS_REGISTER_LIMIT_PER_IP: '1000',
         DICECHESS_LOGIN_LIMIT_PER_IP: '1000',
+        DICECHESS_GUEST_LIMIT_PER_IP: '1000',
+        DICECHESS_EMAIL_LIMIT_PER_IP: '1000',
       },
       url: `http://127.0.0.1:${API_PORT}/health`,
       reuseExistingServer: false,
