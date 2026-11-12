@@ -4,6 +4,7 @@
 
 import type { ColorName, PieceName } from '../api';
 import type { GameStarted, Member, Mode } from '../lobby/protocol';
+import { addMove, addRound, markSkipped, type MoveNotation, type RoundRecord } from './record';
 
 export interface Clocks {
   white: number; // ms left at the moment of the message
@@ -40,6 +41,7 @@ export interface MoveMade extends Event {
   type: 'move_made';
   color: ColorName;
   move: string;
+  notation?: MoveNotation | null; // absent from a server before the record (rolling deploy)
   fen: string;
   remaining: PieceName[];
   allowed_moves: string[];
@@ -81,6 +83,7 @@ export interface GameStateMessage extends Event {
   draw_offers: ColorName[];
   clocks: Clocks;
   result: GameResult | null;
+  record?: RoundRecord[];
 }
 
 /** A round the server skipped: no move was possible with these dice (T-075). */
@@ -127,6 +130,7 @@ export interface OnlineGame {
   clocksAt: number; // local time (performance.now) when the clocks arrived
   result: GameResult | null;
   skipped: SkippedRound | null; // shown until the skipped side rolls again
+  record: RoundRecord[]; // the game record (GS-09)
   needsSync: boolean; // a version was missed: ask for game_state
 }
 
@@ -153,6 +157,7 @@ export function fromStart(started: GameStarted, at: number): OnlineGame {
     clocksAt: at,
     result: null,
     skipped: null,
+    record: [],
     needsSync: false,
   };
 }
@@ -176,6 +181,7 @@ function fromSnapshot(message: GameStateMessage, at: number): OnlineGame {
     clocksAt: at,
     result: message.result,
     skipped: null,
+    record: message.record ?? [],
     needsSync: false,
   };
 }
@@ -201,6 +207,7 @@ export function reduceGame(game: OnlineGame | null, message: GameMessage, at: nu
         clocksAt: at,
         // The opponent's roll comes in the same instant as the skip: keep showing why.
         skipped: next.skipped?.color === message.color ? null : next.skipped,
+        record: addRound(next.record, message.color, message.faces),
       };
     case 'move_made':
       return {
@@ -213,6 +220,7 @@ export function reduceGame(game: OnlineGame | null, message: GameMessage, at: nu
         lastMove: message.move,
         clocks: message.clocks,
         clocksAt: at,
+        record: message.notation ? addMove(next.record, message.notation) : next.record,
       };
     case 'turn_skipped':
       return {
@@ -224,6 +232,7 @@ export function reduceGame(game: OnlineGame | null, message: GameMessage, at: nu
         clocks: message.clocks,
         clocksAt: at,
         skipped: { color: message.color, faces: next.dice?.faces ?? [] },
+        record: markSkipped(next.record),
       };
     case 'draw_offered':
       return { ...next, drawOffers: [...next.drawOffers.filter((c) => c !== message.color), message.color] };

@@ -7,6 +7,7 @@ import { api, type GameState } from '../api';
 import { ApiError } from '../http';
 import { Board } from '../Board';
 import { DicePanel } from '../DicePanel';
+import { GameRecord } from '../game/GameRecord';
 import { boardFen, lastMoveKeys, type Promotion, promotionChoices, toDests, toUci } from '../moves';
 import { PromotionDialog } from '../PromotionDialog';
 
@@ -158,6 +159,7 @@ export function HotSeatPage() {
               {error}
             </p>
           )}
+          <GameRecord record={game?.record ?? []} />
         </aside>
       </div>
     </>

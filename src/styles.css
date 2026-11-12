@@ -424,6 +424,54 @@ a.button.secondary {
   margin-bottom: 4px;
 }
 
+/* Game record (GS-09): at the end of the panel; collapsed on a phone like the short rules. */
+.game-record {
+  font-size: 0.9rem;
+}
+
+.game-record summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.game-record-scroll {
+  max-height: 16rem;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.game-record table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.game-record th {
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+
+.game-record th,
+.game-record td {
+  padding: 2px 4px;
+  vertical-align: top;
+}
+
+.game-record .number,
+.game-record .faces {
+  white-space: nowrap;
+}
+
+.game-record .faces {
+  color: var(--muted);
+}
+
+.game-record .move {
+  white-space: nowrap;
+}
+
 /* Wide screens: the game page grows so that the rules stand left of a full-size board. */
 @media (min-width: 1100px) {
   main:has(> .game) {

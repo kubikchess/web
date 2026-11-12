@@ -10,6 +10,7 @@ import type { ColorName } from '../api';
 import { Board } from '../Board';
 import { DicePanel } from '../DicePanel';
 import { gameErrorText } from '../game/errors';
+import { GameRecord } from '../game/GameRecord';
 import {
   canAcceptDraw,
   canOfferDraw,
@@ -249,6 +250,7 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
               {error}
             </p>
           )}
+          <GameRecord record={game.record} />
         </aside>
         {/* Left of the board on wide screens, below the panel on narrow ones (styles.css). */}
         <RulesSummary />

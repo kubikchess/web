@@ -64,6 +64,22 @@ test('roll and make an allowed move', async ({ page }) => {
   await expect(page.locator('[data-testid="die"][data-used="true"]')).not.toHaveCount(0);
 });
 
+test('L-091: a move appears in the record of the current round', async ({ page }) => {
+  const rolled = await rollUntilMove(page);
+  const move = rolled.allowed_moves.find((uci) => uci.length === 4);
+  if (!move) throw new Error('Expected a non-promotion move');
+  const record = page.getByTestId('game-record');
+  const moves = record.getByTestId(`record-moves-${rolled.turn}`).last();
+  await expect(record.getByTestId(`record-faces-${rolled.turn}`).last()).toHaveText(/\S/);
+  await expect(moves).toHaveText('');
+
+  await clickSquare(page, move.slice(0, 2));
+  await Promise.all([page.waitForResponse(isCommand('/moves')), clickSquare(page, move.slice(2, 4))]);
+
+  // The square the piece went to ends the written move (Кf3, e4, Л:d1 ...).
+  await expect(moves).toHaveText(new RegExp(`${move.slice(2, 4)}$`));
+});
+
 test('a square without an allowed move sends nothing', async ({ page }) => {
   // White's round may be skipped, so the side to move can be either.
   const rolled = await rollUntilMove(page);

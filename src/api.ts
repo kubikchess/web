@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Development hot-seat API client (docs/api.md, "Служебный API: hot-seat").
 
+import type { RoundRecord } from './game/record';
 import { ApiError, request } from './http';
 
 export type ColorName = 'white' | 'black';
@@ -31,6 +32,7 @@ export interface GameState {
   no_capture_moves: number;
   skipped_rounds: number;
   result: ResultState | null;
+  record: RoundRecord[]; // the game record (GS-09)
 }
 
 const GAMES = '/dev/hot-seat/games';
