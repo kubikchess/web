@@ -376,3 +376,55 @@ describe('helpers', () => {
     expect(canOfferDraw({ ...game, result: { winner: null, reason: 'draw_agreed' } })).toBe(false);
   });
 });
+
+describe('forbidden moves and king attackers (GS-11, GS-13)', () => {
+  const blocked = [{ move: 'b1d2', reason: 'maximum' as const, moves: 1, attackers: [] }];
+
+  it('a roll and a move bring them; a skip and the finish clear them', () => {
+    const base = fromStart(started, 0);
+    const game = reduceGame(
+      base,
+      {
+        type: 'round_rolled',
+        game_id: 'g1',
+        version: 1,
+        color: 'white',
+        faces: ['knight', 'rook', 'rook'],
+        allowed_moves: ['b1a3'],
+        moves_left: 3,
+        blocked_moves: blocked,
+        king_attackers: ['a1'],
+        clocks: clocks(180000, 180000, 'white'),
+      },
+      0,
+    );
+    expect(game?.blockedMoves).toEqual(blocked);
+    expect(game?.kingAttackers).toEqual(['a1']);
+    const moved = game && reduceGame(game, { ...moveMade(2), blocked_moves: [], king_attackers: [] }, 0);
+    expect(moved?.blockedMoves).toEqual([]);
+    const skipped = game && reduceGame(game, { type: 'turn_skipped', game_id: 'g1', version: 2, color: 'white', fen: START_FEN, clocks: clocks(1, 1, null) }, 0);
+    expect(skipped?.blockedMoves).toEqual([]);
+    expect(skipped?.kingAttackers).toEqual([]);
+  });
+
+  it('a server without them (rolling deploy) means none', () => {
+    const game = rolled(fromStart(started, 0));
+    expect(game.blockedMoves).toEqual([]);
+    expect(game.kingAttackers).toEqual([]);
+  });
+});
+
+function moveMade(version: number): MoveMade {
+  return {
+    type: 'move_made',
+    game_id: 'g1',
+    version,
+    color: 'white',
+    move: 'b1a3',
+    fen: AFTER_E3,
+    remaining: ['rook', 'rook'],
+    allowed_moves: [],
+    moves_left: 2,
+    clocks: clocks(180000, 180000, 'white'),
+  };
+}

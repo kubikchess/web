@@ -4,6 +4,7 @@
 
 import type { ColorName, PieceName } from '../api';
 import type { GameStarted, Member, Mode } from '../lobby/protocol';
+import type { BlockedMove } from './hints';
 import { addMove, addRound, markSkipped, type MoveNotation, type RoundRecord } from './record';
 
 export interface Clocks {
@@ -34,6 +35,8 @@ export interface RoundRolled extends Event {
   faces: PieceName[];
   allowed_moves: string[];
   moves_left: number;
+  blocked_moves?: BlockedMove[]; // absent from a server before the hints (rolling deploy)
+  king_attackers?: string[];
   clocks: Clocks;
 }
 
@@ -46,6 +49,8 @@ export interface MoveMade extends Event {
   remaining: PieceName[];
   allowed_moves: string[];
   moves_left: number;
+  blocked_moves?: BlockedMove[];
+  king_attackers?: string[];
   clocks: Clocks;
 }
 
@@ -79,6 +84,8 @@ export interface GameStateMessage extends Event {
   dice: OnlineDice | null;
   allowed_moves: string[];
   moves_left: number;
+  blocked_moves?: BlockedMove[];
+  king_attackers?: string[];
   last_move: string | null;
   draw_offers: ColorName[];
   clocks: Clocks;
@@ -124,6 +131,8 @@ export interface OnlineGame {
   dice: OnlineDice | null;
   allowedMoves: string[];
   movesLeft: number;
+  blockedMoves: BlockedMove[]; // forbidden moves of the round and why (GS-11)
+  kingAttackers: string[]; // squares attacking the king of the side to move (GS-13)
   lastMove: string | null;
   drawOffers: ColorName[];
   clocks: Clocks;
@@ -151,6 +160,8 @@ export function fromStart(started: GameStarted, at: number): OnlineGame {
     dice: null,
     allowedMoves: [],
     movesLeft: 0,
+    blockedMoves: [],
+    kingAttackers: [],
     lastMove: null,
     drawOffers: [],
     clocks: { ...started.clocks, running: null },
@@ -175,6 +186,8 @@ function fromSnapshot(message: GameStateMessage, at: number): OnlineGame {
     dice: message.dice,
     allowedMoves: message.allowed_moves,
     movesLeft: message.moves_left,
+    blockedMoves: message.blocked_moves ?? [],
+    kingAttackers: message.king_attackers ?? [],
     lastMove: message.last_move,
     drawOffers: message.draw_offers,
     clocks: message.clocks,
@@ -203,6 +216,8 @@ export function reduceGame(game: OnlineGame | null, message: GameMessage, at: nu
         dice: { color: message.color, faces: message.faces, remaining: message.faces },
         allowedMoves: message.allowed_moves,
         movesLeft: message.moves_left,
+        blockedMoves: message.blocked_moves ?? [],
+        kingAttackers: message.king_attackers ?? [],
         clocks: message.clocks,
         clocksAt: at,
         // The opponent's roll comes in the same instant as the skip: keep showing why.
@@ -217,6 +232,8 @@ export function reduceGame(game: OnlineGame | null, message: GameMessage, at: nu
         dice: next.dice ? { ...next.dice, remaining: message.remaining } : null,
         allowedMoves: message.allowed_moves,
         movesLeft: message.moves_left,
+        blockedMoves: message.blocked_moves ?? [],
+        kingAttackers: message.king_attackers ?? [],
         lastMove: message.move,
         clocks: message.clocks,
         clocksAt: at,
@@ -229,6 +246,8 @@ export function reduceGame(game: OnlineGame | null, message: GameMessage, at: nu
         turn: turnOf(message.fen),
         allowedMoves: [],
         movesLeft: 0,
+        blockedMoves: [],
+        kingAttackers: [],
         clocks: message.clocks,
         clocksAt: at,
         skipped: { color: message.color, faces: next.dice?.faces ?? [] },
@@ -244,6 +263,8 @@ export function reduceGame(game: OnlineGame | null, message: GameMessage, at: nu
         result: message.result,
         allowedMoves: [],
         movesLeft: 0,
+        blockedMoves: [],
+        kingAttackers: [],
         drawOffers: [],
         clocks: message.clocks,
         clocksAt: at,

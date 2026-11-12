@@ -11,6 +11,7 @@ import { Board } from '../Board';
 import { DicePanel } from '../DicePanel';
 import { gameErrorText } from '../game/errors';
 import { GameRecord } from '../game/GameRecord';
+import { MoveHint } from '../game/MoveHint';
 import {
   canAcceptDraw,
   canOfferDraw,
@@ -19,6 +20,7 @@ import {
   isOwnRound,
   type OnlineGame,
 } from '../game/protocol';
+import { useBoardHints } from '../game/useMoveHints';
 import type { Command } from '../lobby/protocol';
 import { boardFen, lastMoveKeys, type Promotion, promotionChoices, toDests, toUci } from '../moves';
 import { opponentName } from '../names';
@@ -105,6 +107,17 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
   const own = isOwnRound(game);
   const dests = useMemo(() => toDests(own ? game.allowedMoves : []), [own, game.allowedMoves]);
   const lastMove = useMemo(() => lastMoveKeys(game.lastMove), [game.lastMove]);
+  const hints = useBoardHints({
+    roundKey: `${game.turn}-${game.record.length}`,
+    ownRound: own,
+    color: game.color,
+    dice: game.dice,
+    movesLeft: game.movesLeft,
+    hasMoves: game.allowedMoves.length > 0,
+    blocked: game.blockedMoves,
+    kingAttackers: game.kingAttackers,
+  });
+  const { tryForbidden, clear: clearHint } = hints;
 
   const sendMove = useCallback(
     (from: Key, to: Key, piece?: Promotion) =>
@@ -114,11 +127,16 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
 
   const onMove = useCallback(
     (from: Key, to: Key) => {
+      if (tryForbidden(from, to)) {
+        setResync((n) => n + 1); // a forbidden move goes back with a hint (GS-12)
+        return;
+      }
+      clearHint();
       const choices = promotionChoices(game.allowedMoves, from, to);
       if (choices.length > 0) setPromotion({ from, to, choices });
       else sendMove(from, to);
     },
-    [game.allowedMoves, sendMove],
+    [game.allowedMoves, sendMove, tryForbidden, clearHint],
   );
 
   const interactive = own && connected && !busy && !promotion;
@@ -141,7 +159,11 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
             onMove={onMove}
             orientation={game.color}
             resync={resync}
+            blocked={hints.blocked}
+            onSelect={interactive ? hints.onSelect : undefined}
+            arrows={hints.arrows}
           />
+          <MoveHint hint={hints.hint} />
           {promotion && (
             <PromotionDialog
               color={game.color}
@@ -253,7 +275,7 @@ export function GamePage({ game, connected, send, leaveGame }: GamePageProps) {
           <GameRecord record={game.record} />
         </aside>
         {/* Left of the board on wide screens, below the panel on narrow ones (styles.css). */}
-        <RulesSummary />
+        <RulesSummary highlight={hints.hint?.rule} />
       </div>
     </section>
   );

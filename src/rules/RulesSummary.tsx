@@ -4,10 +4,14 @@ import { useTranslation } from 'react-i18next';
 
 import { RULES_PAGE } from '../legalApi';
 import { rulesTextValues } from './profile';
-import { RULE_SUMMARY_IDS, summaryOpenAtStart } from './summary';
+import { RULE_SUMMARY_IDS, type RuleSummaryId, summaryOpenAtStart } from './summary';
 
-/** Short rules on the game screen (GS-08): open on a wide screen, collapsed on a phone. */
-export function RulesSummary() {
+/**
+ * Short rules on the game screen (GS-08): open on a wide screen, collapsed on a phone.
+ * `highlight` marks the item that forbids the last attempted move (GS-12, GS-13); the block
+ * does not open by itself, so the board never moves in the middle of a move.
+ */
+export function RulesSummary({ highlight }: { highlight?: RuleSummaryId | null }) {
   const { t } = useTranslation();
   // Decided once when shown; afterwards the player opens and closes it.
   const [open, setOpen] = useState(() =>
@@ -24,7 +28,12 @@ export function RulesSummary() {
       <summary>{t('rules.summary.title')}</summary>
       <ol>
         {RULE_SUMMARY_IDS.map((id) => (
-          <li key={id} data-rule={id}>
+          <li
+            key={id}
+            data-rule={id}
+            className={id === highlight ? 'highlighted' : undefined}
+            aria-current={id === highlight ? 'true' : undefined}
+          >
             {t(`rules.summary.${id}`, values)}
           </li>
         ))}

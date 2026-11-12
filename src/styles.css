@@ -8,6 +8,8 @@
   --panel: #ffffff;
   --border: #d9d2c5;
   --error: #b3261e;
+  /* Wide game panel: a round of three moves fits one line of the game record (L-098). */
+  --game-panel-width: 430px;
   font-family: system-ui, sans-serif;
   color: var(--fg);
   background: var(--bg);
@@ -50,6 +52,21 @@ h2 {
 .board {
   width: 100%;
   aspect-ratio: 1;
+}
+
+/* A forbidden square takes a drop for a hint (GS-12) but shows no move dot. */
+.board cg-board square.move-dest.blocked-dest,
+.board cg-board square.move-dest.blocked-dest:hover {
+  background: none;
+}
+
+/* The hint line under the board (GS-12, GS-13). */
+.move-hint {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent);
+  background: #fbf6ee;
+  border-radius: 4px;
 }
 
 .panel {
@@ -424,6 +441,15 @@ a.button.secondary {
   margin-bottom: 4px;
 }
 
+/* The item that forbids the last attempted move (GS-12, GS-13). */
+.rules-summary li.highlighted {
+  background: #fbf6ee;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
 /* Game record (GS-09): at the end of the panel; collapsed on a phone like the short rules. */
 .game-record {
   font-size: 0.9rem;
@@ -472,17 +498,23 @@ a.button.secondary {
   white-space: nowrap;
 }
 
-/* Wide screens: the game page grows so that the rules stand left of a full-size board. */
+/*
+ * Wide screens (GS-09, L-098): the panel is wide enough for a round of three moves in one line
+ * of the game record. From 1280 px the rules stand left of the board in a narrower column; from
+ * 1100 px to 1279 px they go below the board and the panel, so the board keeps 600 px.
+ */
 @media (min-width: 1100px) {
   main:has(> .game) {
-    max-width: 1320px;
+    max-width: 1440px;
   }
 
   .game .layout {
     display: grid;
-    /* Rules take the spare width; the panel is narrow (customer, 2026-11-09). */
-    grid-template-columns: minmax(240px, 1fr) minmax(0, 600px) 280px;
-    grid-template-areas: 'rules board panel';
+    grid-template-columns: minmax(0, 600px) var(--game-panel-width);
+    grid-template-areas:
+      'board panel'
+      'rules rules';
+    justify-content: center;
   }
 
   .game .board-area {
@@ -501,5 +533,12 @@ a.button.secondary {
   /* Three dice fit the narrow panel. */
   .game .die {
     min-width: 52px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .game .layout {
+    grid-template-columns: minmax(200px, 1fr) minmax(0, 600px) var(--game-panel-width);
+    grid-template-areas: 'rules board panel';
   }
 }

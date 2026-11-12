@@ -35,7 +35,21 @@ test('L-078: the About page links to the rules', async ({ page }) => {
   await expect(page.getByTestId('rules-page')).toBeVisible();
 });
 
-const SUMMARY_IDS = ['dice', 'maximum', 'goal', 'king-capture', 'special', 'promotion', 'draw'];
+const SUMMARY_IDS = [
+  'dice',
+  'dice-odds',
+  'maximum',
+  'skip',
+  'goal',
+  'king-attacked',
+  'king-capture',
+  'pawn-king',
+  'king-king',
+  'castling',
+  'en-passant',
+  'promotion',
+  'draw',
+];
 
 /** A guest starts a game against the computer and waits for the game screen. */
 async function guestBotGame(page: Page): Promise<void> {
@@ -62,16 +76,16 @@ test('L-080: the short rules are open left of the board on a wide screen and lin
     await expect(items.nth(index)).toBeVisible();
   }
   await expect(summary).toContainText('30 ходов подряд без взятий');
-  // A column to the left of the board; the board keeps its full size (600 px).
+  // A column to the left of the board (1280 px wide screen); the board stays large.
   const summaryBox = await summary.boundingBox();
   const boardBox = await page.getByTestId('board').boundingBox();
   if (!summaryBox || !boardBox) throw new Error('no box');
   expect(summaryBox.x + summaryBox.width).toBeLessThanOrEqual(boardBox.x);
-  expect(Math.round(boardBox.width)).toBe(600);
-  // The rules column is wider than the panel with the clocks and the dice (customer, 2026-11-09).
+  expect(boardBox.width).toBeGreaterThanOrEqual(560);
+  // The panel with the game record takes the width from the rules (customer, 2026-11-12).
   const panelBox = await page.locator('aside.panel').boundingBox();
   if (!panelBox) throw new Error('no box');
-  expect(summaryBox.width).toBeGreaterThan(panelBox.width);
+  expect(panelBox.width).toBeGreaterThan(summaryBox.width);
 
   const full = summary.getByRole('link', { name: 'Полные правила' });
   await expect(full).toHaveAttribute('href', '/rules');

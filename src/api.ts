@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Development hot-seat API client (docs/api.md, "Служебный API: hot-seat").
 
+import type { BlockedMove } from './game/hints';
 import type { RoundRecord } from './game/record';
 import { ApiError, request } from './http';
 
@@ -33,6 +34,8 @@ export interface GameState {
   skipped_rounds: number;
   result: ResultState | null;
   record: RoundRecord[]; // the game record (GS-09)
+  blocked_moves?: BlockedMove[]; // forbidden moves and why (GS-11); absent from an older server
+  king_attackers?: string[]; // squares attacking the king of the side to move (GS-13)
 }
 
 const GAMES = '/dev/hot-seat/games';

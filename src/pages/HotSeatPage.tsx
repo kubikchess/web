@@ -8,8 +8,11 @@ import { ApiError } from '../http';
 import { Board } from '../Board';
 import { DicePanel } from '../DicePanel';
 import { GameRecord } from '../game/GameRecord';
+import { MoveHint } from '../game/MoveHint';
+import { useBoardHints } from '../game/useMoveHints';
 import { boardFen, lastMoveKeys, type Promotion, promotionChoices, toDests, toUci } from '../moves';
 import { PromotionDialog } from '../PromotionDialog';
+import { RulesSummary } from '../rules/RulesSummary';
 
 // The game id lives in the URL: a reload keeps the game, and a game created through
 // the API (for example from a FEN) can be opened at /?game=<id>.
@@ -84,6 +87,18 @@ export function HotSeatPage() {
 
   const dests = useMemo(() => toDests(game?.allowed_moves ?? []), [game?.allowed_moves]);
   const lastMove = useMemo(() => lastMoveKeys(game?.last_move ?? null), [game?.last_move]);
+  // In hot-seat the side to move is the one at the board.
+  const hints = useBoardHints({
+    roundKey: `${game?.turn ?? ''}-${game?.record.length ?? 0}`,
+    ownRound: game?.phase === 'move',
+    color: game?.turn ?? 'white',
+    dice: game?.phase === 'move' ? (game.dice ?? null) : null,
+    movesLeft: game?.moves_left ?? 0,
+    hasMoves: (game?.allowed_moves.length ?? 0) > 0,
+    blocked: game?.blocked_moves ?? [],
+    kingAttackers: game?.king_attackers ?? [],
+  });
+  const { tryForbidden, clear: clearHint } = hints;
 
   const sendMove = useCallback(
     (from: Key, to: Key, piece?: Promotion) => {
@@ -96,19 +111,26 @@ export function HotSeatPage() {
   const onMove = useCallback(
     (from: Key, to: Key) => {
       if (!game) return;
+      if (tryForbidden(from, to)) {
+        setResync((n) => n + 1); // a forbidden move goes back with a hint (GS-12)
+        return;
+      }
+      clearHint();
       const choices = promotionChoices(game.allowed_moves, from, to);
       if (choices.length > 0) setPromotion({ from, to, choices });
       else sendMove(from, to);
     },
-    [game, sendMove],
+    [game, sendMove, tryForbidden, clearHint],
   );
 
   const roll = () => {
     if (game) void run(() => api.roll(game.game_id, game.version), game.game_id);
   };
 
+  const interactive = game?.phase === 'move' && !busy && !promotion;
+
   return (
-    <>
+    <section className="page game">
       <h1>{t('title')}</h1>
       <div className="layout">
         <div className="board-area">
@@ -118,11 +140,15 @@ export function HotSeatPage() {
               turn={game.turn}
               dests={dests}
               lastMove={lastMove}
-              interactive={game.phase === 'move' && !busy && !promotion}
+              interactive={interactive}
               onMove={onMove}
               resync={resync}
+              blocked={hints.blocked}
+              onSelect={interactive ? hints.onSelect : undefined}
+              arrows={hints.arrows}
             />
           )}
+          <MoveHint hint={hints.hint} />
           {game && promotion && (
             <PromotionDialog
               color={game.turn}
@@ -161,8 +187,9 @@ export function HotSeatPage() {
           )}
           <GameRecord record={game?.record ?? []} />
         </aside>
+        <RulesSummary highlight={hints.hint?.rule} />
       </div>
-    </>
+    </section>
   );
 }
 
